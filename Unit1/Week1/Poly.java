@@ -82,18 +82,38 @@ public class Poly {
             return "0";
         }
         StringBuilder sb = new StringBuilder();
-        boolean isFirst = true;
+        
+        Integer firstKey = null;
+        for (int exp: terms.descendingKeySet()) {
+            if (terms.get(exp).getCoeff().signum() > 0) {
+                firstKey = exp;
+                break;
+            }
+        }
+        
+        if (firstKey == null) {
+            firstKey = terms.lastKey();
+        }
+        
+        Mono firstMono = terms.get(firstKey);
+        if (firstMono.getCoeff().signum() < 0) {
+            sb.append("-");
+        }
+        sb.append(firstMono.toAbsString());
+        
         for (int exp : terms.descendingKeySet()) {
+            if (exp == firstKey) {
+                continue;
+            }
             Mono m = terms.get(exp);
             BigInteger c = m.getCoeff();
-            if (c.signum() > 0 && !isFirst) {
+            
+            if (c.signum() > 0) {
                 sb.append("+");
-            }
-            if (c.signum() < 0) {
+            } else {
                 sb.append("-");
             }
             sb.append(m.toAbsString());
-            isFirst = false;
         }
         return sb.toString();
     }
