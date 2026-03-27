@@ -60,28 +60,34 @@ public class Parser {
         if (Objects.equals(token, "[")) {
             res = parseSelectionFactor();
         } else if (Objects.equals(token, "exp")) {
-            lexer.next();
-            lexer.next();
+            lexer.nextTwo();
             Poly innerPoly = parseExpr();
             lexer.next();
             res = new Poly();
-            res.addTerm(new TermKey(BigInteger.ZERO, innerPoly), BigInteger.ONE);
-        } else if (functions != null && functions.containsKey(token)) {
+            res.addTerm(new TermKey(BigInteger.ZERO, BigInteger.ZERO, innerPoly), BigInteger.ONE);
+        } else if (Objects.equals(token, "dx") || Objects.equals(token,"dy")) {
+            lexer.nextTwo();
+            Poly inner = parseExpr();
             lexer.next();
+            res = inner.derivative(token.equals("dx") ? "x" : "y");
+        } else if (Objects.equals(token, "grad")) {
+            lexer.nextTwo();
+            Poly inner = parseExpr();
             lexer.next();
-            Poly arg = parseExpr();
-            lexer.next();
-            String argStr = arg.getTerms().isEmpty() ? "(0)" : "(" + arg + ")";
-            String expandedStr = functions.get(token).replaceAll("\\bx\\b",
-                    Matcher.quoteReplacement(argStr));
-            res = new Parser(new Lexer(expandedStr), functions).parseExpr();
+            res = inner.derivative("x");
+            res.addPoly(inner.derivative("y"));
+        } else if (Objects.equals(token, "f")) {
+            res = parseFunction();
         } else if (Objects.equals(token, "(")) {
             lexer.next();
             res = parseExpr();
             lexer.next();
         } else if (Objects.equals(token, "x")) {
             lexer.next();
-            res = new Poly(BigInteger.ONE, BigInteger.ONE);
+            res = new Poly(BigInteger.ONE, BigInteger.ZERO, BigInteger.ONE);
+        } else if (Objects.equals(token, "y")) {
+            lexer.next();
+            res = new Poly(BigInteger.ZERO, BigInteger.ONE, BigInteger.ONE);
         } else {
             StringBuilder sb = new StringBuilder();
             if (lexer.peek().equals("+") || lexer.peek().equals("-")) {
@@ -98,6 +104,39 @@ public class Parser {
             res = res.pow(parseExpInt());
         }
         return res;
+    }
+    
+    @SuppressWarnings("checkstyle:LocalVariableName")
+    private Poly parseFunction() {
+        lexer.next();
+        String funcKey = "f";
+        
+        if (lexer.peek().equals("{")) {
+            lexer.next();
+            String k = lexer.peek();
+            lexer.nextTwo();
+            funcKey = "f{" + k + "}";
+        }
+        
+        lexer.next();
+        Poly arg = parseExpr();
+        lexer.next();
+        
+        String argStr = arg.getTerms().isEmpty() ? "(0)" : "(" + arg + ")";
+        
+        if (funcKey.startsWith("f{") && !funcKey.equals("f{0}") && !funcKey.equals("f{1}")) {
+            int k = Integer.parseInt(funcKey.substring(2, funcKey.length() - 1));
+            String template = functions.get("f{n}");
+            String defStr = template.replace("{n-1}","{" + (k - 1) + "}")
+                    .replace("{n-2}","{" + (k - 2) + "}");
+            Poly purePoly = new Parser(new Lexer(defStr),functions).parseExpr();
+            functions.put(funcKey, purePoly.toString());
+        }
+        
+        String expandedStr = functions.get(funcKey);
+        expandedStr = expandedStr.replaceAll("\\bx\\b", Matcher.quoteReplacement(argStr));
+
+        return new Parser(new Lexer(expandedStr), functions).parseExpr();
     }
     
     private Poly parseSelectionFactor() {
@@ -172,13 +211,17 @@ public class Parser {
             lexer.next();
             skipFactor();
             lexer.next();
-        } else if (Objects.equals(token, "exp")) {
-            lexer.next();
-            lexer.next();
+        } else if (Objects.equals(token, "dx") || Objects.equals(token, "dy")
+                || Objects.equals(token, "grad") || Objects.equals(token, "exp")) {
+            lexer.nextTwo();
             skipExpr();
             lexer.next();
-        } else if (functions != null && functions.containsKey(token)) {
+        } else if (Objects.equals(token, "f")) {
             lexer.next();
+            if (lexer.peek().equals("{")) {
+                lexer.next();
+                lexer.nextTwo();
+            }
             lexer.next();
             skipExpr();
             lexer.next();
@@ -186,7 +229,7 @@ public class Parser {
             lexer.next();
             skipExpr();
             lexer.next();
-        } else if (Objects.equals(token, "x")) {
+        } else if (Objects.equals(token, "x") || Objects.equals(token, "y")) {
             lexer.next();
         } else {
             if (lexer.peek().equals("+") || lexer.peek().equals("-")) { lexer.next(); }

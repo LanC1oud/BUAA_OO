@@ -4,15 +4,21 @@ import java.util.Objects;
 public class TermKey implements Comparable<TermKey> {
     // x^expX*exp(expPoly)
     private final BigInteger expX;
+    private final BigInteger expY;
     private final Poly expPoly;
     
-    public TermKey(BigInteger expX, Poly expPoly) {
+    public TermKey(BigInteger expX, BigInteger expY, Poly expPoly) {
         this.expX = expX;
+        this.expY = expY;
         this.expPoly = expPoly;
     }
     
     public BigInteger getExpX() {
         return expX;
+    }
+    
+    public BigInteger getExpY() {
+        return expY;
     }
     
     public Poly getExpPoly() {
@@ -25,20 +31,23 @@ public class TermKey implements Comparable<TermKey> {
         if (!(o instanceof TermKey)) { return false; }
         TermKey other = (TermKey) o;
         return Objects.equals(expX, other.expX) &&
-                Objects.equals(expPoly.toString(),other.expPoly.toString());
+                Objects.equals(expY, other.expY) &&
+                Objects.equals(expPoly.toString(), other.expPoly.toString());
     }
     
     @Override
     public int hashCode() {
-        return Objects.hash(expX, expPoly.toString());
+        return Objects.hash(expX, expY, expPoly.toString());
     }
     
     @Override
     public int compareTo(TermKey other) {
         int cmpX = this.expX.compareTo(other.expX);
-        if (cmpX != 0) {
-            return cmpX;
-        }
+        if (cmpX != 0) { return cmpX; }
+        
+        int cmpY = this.expY.compareTo(other.expY);
+        if (cmpY != 0) { return cmpY; }
+        
         java.util.TreeMap<TermKey, BigInteger> map1 = this.expPoly.getTerms();
         java.util.TreeMap<TermKey, BigInteger> map2 = other.expPoly.getTerms();
         if (map1.size() != map2.size()) { return Integer.compare(map1.size(), map2.size()); }

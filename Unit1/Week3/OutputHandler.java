@@ -40,10 +40,11 @@ public class OutputHandler {
         
         BigInteger absCoeff = coeff.abs();
         BigInteger expX = key.getExpX();
+        BigInteger expY = key.getExpY();
         Poly expPoly = key.getExpPoly();
         boolean hasExp = !expPoly.isZero();
         
-        if (expX.equals(BigInteger.ZERO) && !hasExp) {
+        if (expX.equals(BigInteger.ZERO) && expY.equals(BigInteger.ZERO) && !hasExp) {
             sb.append(absCoeff);
             return;
         }
@@ -59,6 +60,13 @@ public class OutputHandler {
             if (printedBefore) { sb.append("*"); }
             if (expX.equals(BigInteger.ONE)) { sb.append("x"); }
             else { sb.append("x^").append(expX); }
+            printedBefore = true;
+        }
+        
+        if (!expY.equals(BigInteger.ZERO)) {
+            if (printedBefore) { sb.append("*"); }
+            if (expY.equals(BigInteger.ONE)) { sb.append("y"); }
+            else { sb.append("y^").append(expY); }
             printedBefore = true;
         }
         

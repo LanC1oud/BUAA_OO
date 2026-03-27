@@ -32,7 +32,7 @@ public class ExpCompressor {
                 alternative = "exp(" + simpleBody + ")^" + g;
             }
 
-            if (alternative.length() <= bestStr.length()) {
+            if (alternative.length() < bestStr.length()) {
                 bestStr = alternative;
             }
         }

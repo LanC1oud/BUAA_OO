@@ -15,6 +15,19 @@ public class Solver {
             String funcName = leftSide.substring(0, leftSide.indexOf('(')).trim();
             functions.put(funcName, Preprocesser.preprocess(rightSide));
         }
+        int m = Integer.parseInt(scanner.nextLine());
+        if (m > 0) {
+            for (int i = 0; i < 3; i++) {
+                String def = scanner.nextLine().replaceAll("\\s+", "");
+                String[] parts = def.split("=",2);
+                String leftSide = parts[0];
+                String rightSide = parts[1];
+                if (leftSide.startsWith("f{0}")) { functions.put("f{0}", rightSide); }
+                if (leftSide.startsWith("f{1}")) { functions.put("f{1}", rightSide); }
+                if (leftSide.startsWith("f{n}")) { functions.put("f{n}", rightSide); }
+            }
+        }
+        
         String input = scanner.nextLine();
         String fixedInput = Preprocesser.preprocess(input);
         
